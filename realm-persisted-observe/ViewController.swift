@@ -38,6 +38,9 @@ class ViewController: UIViewController {
             }
         )
 
+        // Obj-C Style KVO
+        newModel.addObserver(self, forKeyPath: "count", options: [.new], context: nil)
+
         // KVO fails on this line with:
         // Fatal error: Could not extract a String from KeyPath Swift.ReferenceWritableKeyPath<realm_persisted_observe.NewStyleModel, Swift.Int>
 //        observations.append(
@@ -54,13 +57,23 @@ class ViewController: UIViewController {
 //            }
 //        )
 
+        // Swift Style KVO
         // Fails when `mixedModel.count` is incremented with:
         // Simultaneous accesses to <address>, but modification requires exclusive access.
-        observations.append(
-            mixedModel.observe(\MixedStylesModel.count) { [unowned self] _, _ in
-                print("mixed model count changed to \(self.mixedModel.count)")
-            }
-        )
+//        observations.append(
+//            mixedModel.observe(\MixedStylesModel.count, options: [.old]) { _, change in
+//                print("mixed model count changed to \(change)")
+//            }
+//        )
+    }
+
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if let newValue = change?[.newKey] {
+            print("new model count changed to \(newValue)")
+        }
+        else {
+            print("new model count changed but no value received")
+        }
     }
 
     func incrementModels() {
@@ -79,6 +92,7 @@ class ViewController: UIViewController {
     deinit {
         tokens = []
         observations = []
+        removeObserver(self, forKeyPath: "count")
     }
 }
 
